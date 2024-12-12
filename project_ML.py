@@ -251,3 +251,105 @@ plot_confusion_matrices(Y_test, best_Rf_prediction, best_Rf_prediction_Random)
 
 # For SVM
 plot_confusion_matrices(Y_test, svm_predictions, svm_random_predictions)
+
+
+from catboost import CatBoostClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+
+# 3rd Algorithm: CatBoost Classifier
+# Simple CatBoost Model
+catboost_model = CatBoostClassifier(
+    random_seed=42, 
+    verbose=0  # Suppress training output
+)
+
+# Train the CatBoost model on the SMOTE-enhanced training data
+catboost_model.fit(X_train_smote, Y_train_smote)
+
+# Predictions with CatBoost
+catboost_predictions = catboost_model.predict(X_test)
+
+# Evaluation of the CatBoost model
+print("CatBoost Confusion Matrix:\n", confusion_matrix(Y_test, catboost_predictions))
+print("CatBoost Classification Report:\n", classification_report(Y_test, catboost_predictions))
+print("CatBoost Accuracy Score:\n", accuracy_score(Y_test, catboost_predictions))
+
+# Define the parameter grid for GridSearchCV
+param_grid = {
+    'iterations': [100, 300, 500],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'depth': [4, 6, 8],
+}
+
+# Initialize the CatBoost model
+catboost_model = CatBoostClassifier(
+    random_seed=42, 
+    verbose=0,
+    loss_function='MultiClass'  # Specify loss function for multi-class classification
+)
+
+# Set up GridSearchCV
+catboost_grid_search = GridSearchCV(
+    estimator=catboost_model,
+    param_grid=param_grid,
+    scoring='accuracy',
+    cv=3,
+    verbose=1,
+    n_jobs=-1
+)
+
+# Perform the grid search on the training data
+catboost_grid_search.fit(X_train_smote, Y_train_smote)
+
+# Print the best parameters and the corresponding score
+print("Best Parameters (Grid Search):", catboost_grid_search.best_params_)
+print("Best Accuracy (Grid Search):", catboost_grid_search.best_score_)
+
+# Use the best parameters to train the final model
+best_catboost_model = catboost_grid_search.best_estimator_
+
+# Evaluate the model on the test set
+grid_search_predictions = best_catboost_model.predict(X_test)
+
+print("Confusion Matrix (Grid Search):", confusion_matrix(Y_test, grid_search_predictions))
+print("Classification Report (Grid Search):", classification_report(Y_test, grid_search_predictions))
+print("Accuracy Score (Grid Search):", accuracy_score(Y_test, grid_search_predictions))
+
+# RandomizedSearchCV Implementation
+random_param_grid = {
+    'iterations': [100, 300, 500, 700],
+    'learning_rate': [0.01, 0.1, 0.2, 0.3],
+    'depth': [4, 6, 8, 10],
+}
+
+catboost_random_search = RandomizedSearchCV(
+    estimator=catboost_model,
+    param_distributions=random_param_grid,
+    n_iter=20,  # Number of parameter combinations to try
+    scoring='accuracy',
+    cv=3,
+    verbose=1,
+    random_state=42,
+    n_jobs=-1
+)
+
+# Perform the randomized search on the training data
+catboost_random_search.fit(X_train_smote, Y_train_smote)
+
+# Print the best parameters and the corresponding score
+print("Best Parameters (Random Search):", catboost_random_search.best_params_)
+print("Best Accuracy (Random Search):", catboost_random_search.best_score_)
+
+# Use the best parameters to train the final model
+best_random_catboost_model = catboost_random_search.best_estimator_
+
+# Evaluate the model on the test set
+random_search_predictions = best_random_catboost_model.predict(X_test)
+
+print("Confusion Matrix (Random Search):", confusion_matrix(Y_test, random_search_predictions))
+print("Classification Report (Random Search):", classification_report(Y_test, random_search_predictions))
+print("Accuracy Score (Random Search):", accuracy_score(Y_test, random_search_predictions))
+
+# Plot the confusion matrices for GridSearchCV and RandomizedSearchCV
+plot_confusion_matrices(Y_test, grid_search_predictions, random_search_predictions)
