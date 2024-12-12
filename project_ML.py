@@ -140,7 +140,7 @@ print("Accuracy by RandomSearchCV:\n",accuracy_score(Y_test,best_Rf_prediction_R
 # Support Vector Machine (SVM)
 # Simple SVM Model
 svm_model = SVC(random_state=42)
-svm_model.fit(X_train, Y_train)
+svm_model.fit(X_train_smote,Y_train_smote)
 
 # Prediction
 svm_predictions = svm_model.predict(X_test)
